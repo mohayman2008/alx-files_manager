@@ -36,7 +36,7 @@ async function getDisconnect(req, res) {
   }
 
   await redisClient.del(`auth_${token}`);
-  res.status(204).end();
+  res.status(204).send();
 }
 
 export { getConnect, getDisconnect };
