@@ -49,7 +49,7 @@ async function getMe(req, res) {
     return;
   }
 
-  res.status(200).json({ id: user._id, email: user.email });
+  res.status(200).json({ id: user._id.toString(), email: user.email });
 }
 
 export { postNew, getMe };
