@@ -19,6 +19,9 @@ class DBClient {
   }
 
   async isAliveAsync() {
+    if (this.client.isConnected()) {
+      return true;
+    }
     await this.db.admin().ping();
     return this.client.isConnected();
   }
@@ -39,6 +42,15 @@ class DBClient {
     try {
       const result = await this.db.collection(collection).insertOne(object);
       return result.ops[0];
+    } catch (err) {
+      console.log(err.message || err.toString());
+      return false;
+    }
+  }
+
+  async collectionFindOne(collection, query, options) {
+    try {
+      return this.db.collection(collection).findOne(query, options);
     } catch (err) {
       console.log(err.message || err.toString());
       return false;
