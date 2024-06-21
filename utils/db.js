@@ -11,6 +11,8 @@ class DBClient {
     this.client = MongoClient(URL, { useUnifiedTopology: true });
     this.client.connect();
     this.db = this.client.db();
+    this.users = this.db.collection('users');
+    this.users = this.db.collection('files');
 
     this.client.on('error', (err) => console.log(err.message || err.toString()));
 
@@ -58,7 +60,7 @@ class DBClient {
   }
 
   async userExists(email) {
-    if (await this.db.collection('users').findOne({ email })) {
+    if (await this.users.findOne({ email })) {
       return true;
     }
     return false;
