@@ -14,12 +14,13 @@ async function postNew(req, res) {
     res.status(400).json({ error: 'Missing password' });
     return;
   }
+
   if (await dbClient.userExists(user.email)) {
     res.status(400).json({ error: 'Already exist' });
     return;
   }
 
-  const userObj = await dbClient.collectionInsertOne('users', {
+  const userObj = await dbClient.users.insertOne({
     email: user.email,
     password: sha1(user.password),
   });
@@ -43,7 +44,7 @@ async function getMe(req, res) {
     return;
   }
 
-  const user = await dbClient.collectionFindOne('users', ObjectId(userId), { projection: { email: 1 } });
+  const user = await dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
   if (!user) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
