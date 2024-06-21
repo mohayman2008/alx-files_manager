@@ -20,7 +20,7 @@ async function getConnect(req, res) {
 
   let user;
   try {
-    user = dbClient.users.findOne('users', { email, password: sha1(password) });
+    user = await dbClient.users.findOne({ email, password: sha1(password) });
   } catch (err) {
     console.log(err.message || err.toString());
     user = false;

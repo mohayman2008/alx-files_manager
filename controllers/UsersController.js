@@ -50,10 +50,11 @@ async function getMe(req, res) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
+  console.log(token, userId);
 
   let user;
   try {
-    user = dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
+    user = await dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
   } catch (err) {
     console.log(err.message || err.toString());
     user = false;
