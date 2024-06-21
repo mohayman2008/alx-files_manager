@@ -20,10 +20,17 @@ async function postNew(req, res) {
     return;
   }
 
-  const userObj = await dbClient.users.insertOne({
-    email: user.email,
-    password: sha1(user.password),
-  });
+  let userObj;
+  try {
+    const result = await dbClient.users.insertOne({
+      email: user.email,
+      password: sha1(user.password),
+    });
+    [userObj] = result.ops;
+  } catch (err) {
+    console.log(err.message || err.toString());
+    userObj = false;
+  }
 
   if (!userObj) {
     res.status(500).json({ error: 'User creation failed' });
@@ -44,7 +51,14 @@ async function getMe(req, res) {
     return;
   }
 
-  const user = await dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
+  let user;
+  try {
+    user = dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
+  } catch (err) {
+    console.log(err.message || err.toString());
+    user = false;
+  }
+
   if (!user) {
     res.status(401).json({ error: 'Unauthorized' });
     return;

@@ -18,7 +18,13 @@ async function getConnect(req, res) {
   const [email, password] = Buffer.from(b64EncodedAuth, 'base64').toString('utf8').split(/(?<!.*:.*):/);
   if (!password) { return errorUnauthorized(res); }
 
-  const user = await dbClient.users.findOne('users', { email, password: sha1(password) });
+  let user;
+  try {
+    user = dbClient.users.findOne('users', { email, password: sha1(password) });
+  } catch (err) {
+    console.log(err.message || err.toString());
+    user = false;
+  }
   if (!user) { return errorUnauthorized(res); }
 
   const token = uuidv4();
