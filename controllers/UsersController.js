@@ -50,7 +50,6 @@ async function getMe(req, res) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
-  console.log(token, userId);
 
   let user;
   try {

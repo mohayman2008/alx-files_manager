@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import sha1 from 'sha1';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -41,4 +42,28 @@ async function getDisconnect(req, res) {
   return res.status(204).send();
 }
 
-export { getConnect, getDisconnect };
+async function authenticateUser(req, res) {
+  const token = (req.header('X-token') || '').trim();
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+
+  let user;
+  try {
+    user = await dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
+  } catch (err) {
+    console.log(err.message || err.toString());
+    user = false;
+  }
+
+  if (!user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+
+  return user;
+}
+
+export { getConnect, getDisconnect, authenticateUser };
