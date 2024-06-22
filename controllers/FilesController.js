@@ -14,6 +14,7 @@ if (process.env.FOLDER_PATH && process.env.FOLDER_PATH.length) {
 } else {
   FOLDER_PATH = '/tmp/files_manager';
 }
+const PAGE_SIZE = 20;
 
 async function postUpload(req, res) {
   const user = await authenticateUser(req, res);
@@ -79,4 +80,84 @@ async function postUpload(req, res) {
   res.status(201).json(file);
 }
 
-export { postUpload }; // eslint-disable-line import/prefer-default-export
+async function getShow(req, res) {
+  const user = await authenticateUser(req, res);
+
+  if (!user) {
+    return;
+  }
+
+  let file;
+  try {
+    file = await dbClient.files.findOne({
+      _id: ObjectId(req.params.id),
+      userId: user._id.toString(),
+    });
+  } catch (err) {
+    console.log(err.message || err.toString());
+    file = false;
+  }
+
+  if (!file) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  const result = {
+    id: file._id,
+    userId: file.userId,
+    name: file.name,
+    type: file.type,
+    isPublic: file.isPublic,
+    parentId: file.parentId,
+  };
+
+  if (result.type !== 'folder') result.localPath = file.localPath;
+
+  res.json(result);
+}
+
+async function getIndex(req, res) {
+  const user = await authenticateUser(req, res);
+
+  if (!user) {
+    return;
+  }
+
+  const parentId = req.query.parentId || 0;
+  const page = req.query.page || 0;
+
+  let result;
+  try {
+    result = await dbClient.files.find(
+      { parentId, userId: user._id.toString() },
+      { skip: PAGE_SIZE * page, limit: PAGE_SIZE },
+    ).toArray();
+  } catch (err) {
+    console.log(err.message || err.toString());
+    result = false;
+  }
+
+  if (!result) {
+    res.status(500).json({ error: 'List retrieval failed' });
+    return;
+  }
+
+  result = result.map((file) => {
+    const obj = {
+      id: file._id,
+      userId: file.userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    };
+
+    if (file.type !== 'folder') obj.localPath = file.localPath;
+    return obj;
+  });
+
+  res.json(result);
+}
+
+export { getShow, getIndex, postUpload };
