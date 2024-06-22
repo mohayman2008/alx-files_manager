@@ -95,7 +95,7 @@ async function getShow(req, res) {
   try {
     file = await dbClient.files.findOne({
       _id: ObjectId(req.params.id),
-      userId: user._id.toString(),
+      userId: user._id,
     });
   } catch (err) {
     console.log(err.message || err.toString());
@@ -128,13 +128,18 @@ async function getIndex(req, res) {
     return;
   }
 
-  const parentId = req.query.parentId || 0;
+  let parentId;
+  if (req.query.parentId) {
+    parentId = ObjectId(req.query.parentId);
+  } else {
+    parentId = '0';
+  }
   const page = req.query.page || 0;
 
   let result;
   try {
     result = await dbClient.files.find(
-      { parentId, userId: user._id.toString() },
+      { parentId, userId: user._id },
       { skip: PAGE_SIZE * page, limit: PAGE_SIZE },
     ).toArray();
   } catch (err) {
