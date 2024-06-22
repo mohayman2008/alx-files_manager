@@ -41,8 +41,12 @@ async function postUpload(req, res) {
 
   if (parentId !== 0) {
     const parent = await dbClient.files.findOne((ObjectId(parentId)));
-    if (!parent || parent.type !== 'folder') {
+    if (!parent) {
       res.status(400).json({ error: 'Parent not found' });
+      return;
+    }
+    if (parent.type !== 'folder') {
+      res.status(400).json({ error: 'Parent is not a folder' });
       return;
     }
   }
