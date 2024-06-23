@@ -188,7 +188,7 @@ async function updateFileIsPublic(req, res, isPublic) {
         userId: user._id,
       },
       { $set: { isPublic } },
-      { returnDocument: 'after' /* , returnOriginal: false, */ },
+      { /* returnDocument: 'after', */returnOriginal: false },
     )).value;
 
     if (!file) {
