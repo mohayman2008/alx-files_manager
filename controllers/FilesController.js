@@ -8,6 +8,7 @@ import dbClient from '../utils/db';
 import { authenticateUser } from './AuthController';
 
 const FILE_TYPES = ['folder', 'file', 'image'];
+const DEFAULT_PARENT_ID = '0';
 let FOLDER_PATH;
 if (process.env.FOLDER_PATH && process.env.FOLDER_PATH.length) {
   FOLDER_PATH = process.env.FOLDER_PATH;
@@ -36,10 +37,10 @@ export async function postUpload(req, res) {
     res.status(400).json({ error: 'Missing data' });
     return;
   }
-  const parentId = params.parentId || '0';
+  const parentId = params.parentId || DEFAULT_PARENT_ID;
   const isPublic = params.isPublic || false;
 
-  if (parentId !== '0') {
+  if (parentId !== DEFAULT_PARENT_ID) {
     const parent = await dbClient.files.findOne((ObjectId(parentId)));
     if (!parent) {
       res.status(400).json({ error: 'Parent not found' });
@@ -56,7 +57,7 @@ export async function postUpload(req, res) {
     name,
     type,
     isPublic,
-    parentId: parentId === '0' ? '0' : ObjectId(parentId),
+    parentId: parentId === DEFAULT_PARENT_ID ? DEFAULT_PARENT_ID : ObjectId(parentId),
   };
 
   if (type !== 'folder') {
@@ -79,6 +80,8 @@ export async function postUpload(req, res) {
   }
   file.id = file._id;
   delete file._id;
+
+  file.parentId = parentId === DEFAULT_PARENT_ID ? Number(DEFAULT_PARENT_ID) : parentId;
 
   res.status(201).json(file);
 }
@@ -131,7 +134,7 @@ export async function getIndex(req, res) {
   if (req.query.parentId) {
     parentId = ObjectId(req.query.parentId);
   } else {
-    parentId = '0';
+    parentId = DEFAULT_PARENT_ID;
   }
   const page = req.query.page || 0;
 
@@ -198,7 +201,7 @@ async function updateFileIsPublic(req, res, isPublic) {
         name: file.name,
         type: file.type,
         isPublic: file.isPublic,
-        parentId: file.parentId.toString(),
+        parentId: file.parentId === DEFAULT_PARENT_ID ? Number(DEFAULT_PARENT_ID) : file.parentId,
       };
 
       if (result.type !== 'folder') result.localPath = file.localPath;
