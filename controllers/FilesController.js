@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ObjectId } from 'mongodb';
-import { resolve } from 'path';
+import { resolve as pathResolve } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 // import redisClient from '../utils/redis';
@@ -16,7 +16,7 @@ if (process.env.FOLDER_PATH && process.env.FOLDER_PATH.length) {
 }
 const PAGE_SIZE = 20;
 
-async function postUpload(req, res) {
+export async function postUpload(req, res) {
   const user = await authenticateUser(req, res);
 
   if (!user) {
@@ -36,10 +36,10 @@ async function postUpload(req, res) {
     res.status(400).json({ error: 'Missing data' });
     return;
   }
-  const parentId = params.parentId || 0;
+  const parentId = params.parentId || '0';
   const isPublic = params.isPublic || false;
 
-  if (parentId !== 0) {
+  if (parentId !== '0') {
     const parent = await dbClient.files.findOne((ObjectId(parentId)));
     if (!parent) {
       res.status(400).json({ error: 'Parent not found' });
@@ -52,12 +52,11 @@ async function postUpload(req, res) {
   }
 
   const file = {
-    id: null,
-    userId: user._id.toString(),
+    userId: user._id,
     name,
     type,
     isPublic,
-    parentId,
+    parentId: parentId === '0' ? '0' : ObjectId(parentId),
   };
 
   if (type !== 'folder') {
@@ -65,7 +64,7 @@ async function postUpload(req, res) {
       await fs.mkdirSync(FOLDER_PATH, { recursive: true });
     }
 
-    const localPath = resolve(FOLDER_PATH, uuidv4());
+    const localPath = pathResolve(FOLDER_PATH, uuidv4());
     await fs.writeFileSync(localPath, Buffer.from(data, 'base64'));
     file.localPath = localPath;
   }
@@ -84,7 +83,7 @@ async function postUpload(req, res) {
   res.status(201).json(file);
 }
 
-async function getShow(req, res) {
+export async function getShow(req, res) {
   const user = await authenticateUser(req, res);
 
   if (!user) {
@@ -121,7 +120,7 @@ async function getShow(req, res) {
   res.json(result);
 }
 
-async function getIndex(req, res) {
+export async function getIndex(req, res) {
   const user = await authenticateUser(req, res);
 
   if (!user) {
@@ -136,10 +135,11 @@ async function getIndex(req, res) {
   }
   const page = req.query.page || 0;
 
+  const userId = ObjectId(user._id.toString());
   let result;
   try {
     result = await dbClient.files.find(
-      { parentId, userId: user._id },
+      { parentId, userId },
       { skip: PAGE_SIZE * page, limit: PAGE_SIZE },
     ).toArray();
   } catch (err) {
@@ -169,4 +169,56 @@ async function getIndex(req, res) {
   res.json(result);
 }
 
-export { getShow, getIndex, postUpload };
+async function updateFileIsPublic(req, res, isPublic) {
+  const user = await authenticateUser(req, res);
+
+  if (!user) {
+    return;
+  }
+
+  let errorMsg;
+  let errorCode;
+  try {
+    const file = await (await dbClient.files.findOneAndUpdate(
+      {
+        _id: ObjectId(req.params.id),
+        userId: user._id,
+      },
+      { $set: { isPublic } },
+      { returnDocument: 'after' /* , returnOriginal: false, */ },
+    )).value;
+
+    if (!file) {
+      errorMsg = 'Not found';
+      errorCode = 404;
+    } else {
+      const result = {
+        id: file._id.toString(),
+        userId: file.userId.toString(),
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId.toString(),
+      };
+
+      if (result.type !== 'folder') result.localPath = file.localPath;
+
+      res.json(result);
+      return;
+    }
+  } catch (err) {
+    console.log(err.message || err.toString());
+    errorMsg = 'File publishing or unpublishing failed';
+    errorCode = 500;
+  }
+
+  res.status(errorCode).json({ error: errorMsg });
+}
+
+export async function putPublish(req, res) {
+  updateFileIsPublic(req, res, true);
+}
+
+export async function putUnpublish(req, res) {
+  updateFileIsPublic(req, res, false);
+}
