@@ -246,7 +246,7 @@ export async function getFile(req, res) {
     const userId = await redisClient.get(`auth_${token}`);
     if (!userId || userId !== file.userId.toString()) {
       console.log('Not Public');
-      res.status(401).json({ error: 'Not found' });
+      res.status(404).json({ error: 'Not found' });
       return;
     }
   }
@@ -261,7 +261,7 @@ export async function getFile(req, res) {
     data = await fs.readFileSync(file.localPath);
   } catch (err) {
     console.log(err.message || err.toString());
-    res.status(401).json({ error: 'Not found' });
+    res.status(404).json({ error: 'Not found' });
     return;
   }
 
