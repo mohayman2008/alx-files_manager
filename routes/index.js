@@ -3,7 +3,7 @@ import express from 'express';
 import { getStatus, getStats } from '../controllers/AppController';
 import { getConnect, getDisconnect } from '../controllers/AuthController';
 import {
-  getShow, getIndex, postUpload, putPublish, putUnpublish,
+  getFile, getShow, getIndex, postUpload, putPublish, putUnpublish,
 } from '../controllers/FilesController';
 import { postNew, getMe } from '../controllers/UsersController';
 
@@ -14,6 +14,7 @@ router.get('/stats', getStats);
 router.get('/connect', getConnect);
 router.get('/disconnect', getDisconnect);
 router.get('/users/me', getMe);
+router.get('/files/:id/data', getFile);
 router.get('/files/:id', getShow);
 router.get('/files', getIndex);
 

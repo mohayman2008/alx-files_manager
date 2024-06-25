@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { ObjectId } from 'mongodb';
 
 import dbClient from './utils/db';
@@ -5,7 +6,7 @@ import dbClient from './utils/db';
 const FILES = [
   {
     _id: ObjectId('66762cd2f3513a13ca7c0020'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'myText.txt',
     type: 'file',
     data: 'SGVsbG8gV2Vic3RhY2shCg==',
@@ -15,7 +16,7 @@ const FILES = [
   },
   {
     _id: ObjectId('66762d5b84ddc4143782fd0e'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'myText.txt',
     type: 'file',
     isPublic: false,
@@ -24,7 +25,7 @@ const FILES = [
   },
   {
     _id: ObjectId('66762e0d23aad1147eff9b00'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'myText.txt',
     type: 'file',
     isPublic: false,
@@ -33,7 +34,7 @@ const FILES = [
   },
   {
     _id: ObjectId('66762e59bf2ed814c6971521'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'myText.txt',
     type: 'file',
     isPublic: false,
@@ -42,7 +43,7 @@ const FILES = [
   },
   {
     _id: ObjectId('66762ed6bf2ed814c6971522'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'images',
     type: 'folder',
     isPublic: false,
@@ -50,7 +51,7 @@ const FILES = [
   },
   {
     _id: ObjectId('6676308abf2ed814c6971523'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'alx-logo.png',
     type: 'image',
     isPublic: false,
@@ -59,7 +60,7 @@ const FILES = [
   },
   {
     _id: ObjectId('667631d079b9d81603267ad1'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'images',
     type: 'folder',
     isPublic: false,
@@ -67,7 +68,7 @@ const FILES = [
   },
   {
     _id: ObjectId('66763212e8fce3162e5e21ae'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'images',
     type: 'folder',
     isPublic: false,
@@ -75,7 +76,7 @@ const FILES = [
   },
   {
     _id: ObjectId('6676323a2afebf166b4abc32'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'images',
     type: 'folder',
     isPublic: false,
@@ -83,7 +84,7 @@ const FILES = [
   },
   {
     _id: ObjectId('667632820d408216ad73ff94'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'images',
     type: 'folder',
     isPublic: false,
@@ -91,7 +92,7 @@ const FILES = [
   },
   {
     _id: ObjectId('667632920d408216ad73ff95'),
-    userId: ObjectId('6675dd5efb2c7a0012dff6c7'),
+    userId: ObjectId('667b422524c1f5d984ee7d2d'),
     name: 'myText.txt',
     type: 'file',
     isPublic: false,
@@ -105,6 +106,14 @@ const FILES = [
   const result = await dbClient.files.insertMany(FILES);
 
   console.log(await result.ops);
+
+  FILES.forEach(async (file) => {
+    const data = file.data || '';
+    if (file.localPath) {
+      await fs.writeFileSync(file.localPath, Buffer.from(data, 'base64'));
+      console.log(`${file.localPath} created successfully!`);
+    }
+  });
 }());
 
 // dbClient.files.find({}).toArray().then(console.log);

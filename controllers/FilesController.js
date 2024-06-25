@@ -1,9 +1,10 @@
 import fs from 'fs';
+import { contentType } from 'mime-types';
 import { ObjectId } from 'mongodb';
 import { resolve as pathResolve } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-// import redisClient from '../utils/redis';
+import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 import { authenticateUser } from './AuthController';
 
@@ -188,7 +189,7 @@ async function updateFileIsPublic(req, res, isPublic) {
         userId: user._id,
       },
       { $set: { isPublic } },
-      { /* returnDocument: 'after', */returnOriginal: false },
+      { returnOriginal: false },
     )).value;
 
     if (!file) {
@@ -224,4 +225,47 @@ export async function putPublish(req, res) {
 
 export async function putUnpublish(req, res) {
   updateFileIsPublic(req, res, false);
+}
+
+export async function getFile(req, res) {
+  let file;
+  try {
+    file = await dbClient.files.findOne(ObjectId(req.params.id));
+  } catch (err) {
+    console.log(err.message || err.toString());
+    file = false;
+  }
+
+  if (!file) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  if (!file.isPublic) {
+    const token = (req.header('X-token') || '').trim();
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId || userId !== file.userId.toString()) {
+      console.log('Not Public');
+      res.status(401).json({ error: 'Not found' });
+      return;
+    }
+  }
+
+  if (file.type === 'folder') {
+    res.status(400).json({ error: 'A folder doesn\'t have content' });
+    return;
+  }
+
+  let data;
+  try {
+    data = await fs.readFileSync(file.localPath);
+  } catch (err) {
+    console.log(err.message || err.toString());
+    res.status(401).json({ error: 'Not found' });
+    return;
+  }
+
+  const mime = contentType(file.name) || 'application/octet-stream';
+  res.set('Content-Type', mime);
+  res.send(data);
 }

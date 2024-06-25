@@ -52,7 +52,7 @@ async function authenticateUser(req, res) {
 
   let user;
   try {
-    user = await dbClient.users.findOne(ObjectId(userId), { projection: { email: 1 } });
+    user = await dbClient.users.findOne(ObjectId(userId));
   } catch (err) {
     console.log(err.message || err.toString());
     user = false;
